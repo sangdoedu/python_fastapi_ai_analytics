@@ -73,4 +73,4 @@ activated.
 
 ## Screenshot
 
-![Screenshot](screenshot.png)
+![Screenshot](static/screenshot.png)
