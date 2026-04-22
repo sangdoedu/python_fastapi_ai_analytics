@@ -1,0 +1,7 @@
+fastapi
+uvicorn
+pandas
+matplotlib
+groq
+python-multipart
+jinja2

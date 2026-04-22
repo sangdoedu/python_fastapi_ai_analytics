@@ -1,0 +1,47 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>AI Data Analyst</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+<div class="container">
+    <h1>AI Data Analyst</h1>
+
+    <input type="file" id="fileInput"/>
+    <button onclick="upload()">Upload</button>
+
+    <textarea id="question" placeholder="Ask a question..."></textarea>
+    <button onclick="ask()">Ask</button>
+
+    <pre id="output"></pre>
+</div>
+
+<script>
+let session_id = null;
+
+async function upload() {
+    const file = document.getElementById("fileInput").files[0];
+    let formData = new FormData();
+    formData.append("file", file);
+
+    let res = await fetch("/upload", { method: "POST", body: formData });
+    let data = await res.json();
+    session_id = data.session_id;
+    alert("Uploaded!");
+}
+
+async function ask() {
+    let question = document.getElementById("question").value;
+
+    let res = await fetch(`/query?session_id=${session_id}&question=${question}`, {
+        method: "POST"
+    });
+
+    let data = await res.json();
+    document.getElementById("output").innerText = JSON.stringify(data, null, 2);
+}
+</script>
+</body>
+</html>
