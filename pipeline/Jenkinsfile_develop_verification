@@ -1,0 +1,49 @@
+pipeline {
+    agent any 
+
+    stages {
+        stage('Checkout') {
+            steps {
+                checkout scmGit(
+                    branches: [[name: '*/main']],
+                    userRemoteConfigs: [[
+                        url: 'git@github.com:sangdoedu/python_fastapi_ai_analytics.git',
+                        credentialsId: 'token_w_github' 
+                    ]]
+                )
+            }
+        }
+
+        stage('Install Dependencies') {
+            steps {
+                // Using a virtual environment is best practice
+                sh '''
+                python3 -m venv venv
+                . venv/bin/activate
+                pip install -r requirements.txt
+                '''
+            }
+        }
+
+        stage('Run Tests') {
+            steps {
+                sh '''
+                . venv/bin/activate
+                pytest tests/
+                '''
+            }
+        }
+    }
+    
+    post {
+        always {
+            echo 'Cleaning up workspace...'
+        }
+        success {
+            echo 'CI Pipeline Passed!'
+        }
+        failure {
+            echo 'CI Pipeline Failed. Check logs.'
+        }
+    }
+}
