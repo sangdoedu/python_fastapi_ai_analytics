@@ -7,7 +7,7 @@ pipeline {
                 checkout scmGit(
                     branches: [[name: '*/main']],
                     userRemoteConfigs: [[
-                        url: 'git@github.com:sangdoedu/python_fastapi_ai_analytics.git',
+                        url: 'https://github.com/sangdoedu/python_fastapi_ai_analytics.git',
                         credentialsId: 'token_w_github' 
                     ]]
                 )
