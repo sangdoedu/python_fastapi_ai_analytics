@@ -5,3 +5,5 @@ matplotlib
 groq
 python-multipart
 jinja2
+pytest
+httpx

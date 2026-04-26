@@ -1,5 +1,5 @@
 pipeline {
-    agent any 
+    agent any
 
     stages {
         stage('Checkout') {
@@ -13,22 +13,35 @@ pipeline {
                 )
             }
         }
+        
+        stage('Debug Files') {
+          steps {
+            sh 'pwd'
+            sh 'ls -la'
+          }
+        }
 
         stage('Install Dependencies') {
+            agent {
+                docker { 
+                    image 'python:3.9-slim' 
+                    // This tells Jenkins to run this stage INSIDE a Python container
+                    // Force the container to run as root to avoid the 'site-packages' error
+                    args '-u root'
+                }
+            }
+            
             steps {
-                // Using a virtual environment is best practice
-                sh '''
-                python3 -m venv venv
-                . venv/bin/activate
-                pip install -r requirements.txt
-                '''
+                // This writes a NEW file inside the Python container's current folder
+                // using the contents of the file Jenkins can see.
+                sh "echo \"\$(cat requirements.txt)\" > local_requirements.txt"
+                sh "pip install --no-cache-dir -r local_requirements.txt"
             }
         }
 
         stage('Run Tests') {
             steps {
                 sh '''
-                . venv/bin/activate
                 pytest tests/
                 '''
             }
