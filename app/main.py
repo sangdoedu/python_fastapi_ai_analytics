@@ -14,4 +14,5 @@ app.include_router(query.router)
 
 @app.get("/")
 async def home(request: Request):
+    print('hello')
     return templates.TemplateResponse("index.html", {"request": request})
