@@ -16,3 +16,7 @@ app.include_router(query.router)
 async def home(request: Request):
     print('hello')
     return templates.TemplateResponse("index.html", {"request": request})
+
+@app.get('/health')
+async def health():
+    return {'status': 'ok'}

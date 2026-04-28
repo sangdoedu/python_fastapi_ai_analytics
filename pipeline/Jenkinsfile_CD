@@ -1,0 +1,106 @@
+pipeline {
+    agent any
+
+    environment {
+        IMAGE_NAME = "sangdomartin/python_repo:python_fast_ai_analysis"
+        TAG = "v1"
+        PATH="/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin"
+    }
+
+    stages {
+        
+        stage('Check Docker') {
+            steps {
+                sh '''
+                echo $PATH
+                which docker
+                docker --version
+                '''
+            }
+        }
+
+        stage('Checkout') {
+            steps {
+                checkout scmGit(
+                    branches: [[name: '*/main']],
+                    userRemoteConfigs: [[
+                        url: 'https://github.com/sangdoedu/python_fastapi_ai_analytics.git',
+                        credentialsId: 'token_w_github' 
+                    ]]
+                )
+            }
+        }
+
+        stage('Install & Test') {
+            steps {
+                withCredentials([string(credentialsId: 'GROQ_API_KEY', variable: 'GROQ_API_KEY')]) {
+                    sh '''
+                    python3 -m venv venv
+                    . venv/bin/activate
+
+                    pip install --upgrade pip
+                    pip install -r requirements.txt
+
+                    export PYTHONPATH=.
+                    export GROQ_API_KEY=${GROQ_API_KEY}
+
+                    pytest tests/
+                    '''
+                }
+            }
+        }
+
+        stage('Build Docker Image') {
+            steps {
+                sh '''
+                docker build -t $IMAGE_NAME:$TAG .
+                docker tag $IMAGE_NAME:$TAG $IMAGE_NAME:latest
+                '''
+            }
+        }
+
+        stage('Push to Docker Hub') {
+            steps {
+                withCredentials([usernamePassword(
+                    credentialsId: 'dockerhub-creds',
+                    usernameVariable: 'DOCKER_USER',
+                    passwordVariable: 'DOCKER_PASS'
+                )]) {
+                    sh '''
+                    echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin
+
+                    docker push $IMAGE_NAME:$TAG
+                    docker push $IMAGE_NAME:latest
+
+                    docker logout
+                    '''
+                }
+            }
+        }
+
+        stage('Deploy to Render') {
+            steps {
+                withCredentials([string(credentialsId: 'render-deploy-hook', variable: 'RENDER_HOOK_URL')]) {
+                    sh '''
+                    echo "Triggering Render deploy..."
+
+                    for i in 1 2 3; do
+                      curl -X POST "$RENDER_HOOK_URL" && break
+                      echo "Retry $i failed... retrying"
+                      sleep 5
+                    done
+                    '''
+                }
+            }
+        }
+    }
+
+    post {
+        success {
+            echo "✅ CI/CD pipeline completed successfully"
+        }
+        failure {
+            echo "❌ Pipeline failed"
+        }
+    }
+}

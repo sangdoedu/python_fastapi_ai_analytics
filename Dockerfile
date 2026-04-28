@@ -1,26 +1,25 @@
-#use this file to build Jenkins with Docker to avoid issue Docker-in-Docker with python script in Jenkins pipeline
+FROM python:3.10-slim
 
+# Prevent Python from buffering stdout/stderr
+ENV PYTHONUNBUFFERED=1
 
-FROM jenkins/jenkins:lts
-USER root
-# Install Docker CLI inside the image
-RUN apt-get update && apt-get install -y docker.io
-# Switch back to the jenkins user for security
-USER jenkins
+WORKDIR /app
 
+# Install system deps (optional but useful)
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    && rm -rf /var/lib/apt/lists/*
 
+# Install Python deps
+COPY requirements.txt .
+RUN pip install --no-cache-dir --upgrade pip && \
+    pip install --no-cache-dir -r requirements.txt
 
-#docker build -t my-jenkins-with-docker .
+# Copy app
+COPY . .
 
+# Render uses port 10000
+EXPOSE 8000
 
-
-# Remove the old one first
-# docker rm -f jenkins-server
-
-# Start the new one
-# docker run -d \
-#   -p 8080:8080 \
-#   -v jenkins_data:/var/jenkins_home \
-#   -v /var/run/docker.sock:/var/run/docker.sock \
-#   --name jenkins-server \
-#   my-jenkins-with-docker
+# Run app
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
