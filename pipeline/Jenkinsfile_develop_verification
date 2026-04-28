@@ -25,16 +25,21 @@ pipeline {
             steps {
                 withCredentials([string(credentialsId: 'GROQ_API_KEY', variable: 'GROQ_API_KEY')]) {
                     sh '''
-                    docker run --rm \
-                      --volumes-from jenkins-server \
-                      -w "${WORKSPACE}" \
-                      -e GROQ_API_KEY="${GROQ_API_KEY}" \
-                      python:3.9-slim \
-                      bash -c "pip install --no-cache-dir -r requirements.txt && export PYTHONPATH=$PYTHONPATH:. && python3 -m pytest tests/"
+                    python3 -m venv venv
+                    . venv/bin/activate
+        
+                    pip install --upgrade pip
+                    pip install --no-cache-dir -r requirements.txt
+        
+                    export PYTHONPATH=$PYTHONPATH:.
+                    export GROQ_API_KEY=${GROQ_API_KEY}
+        
+                    python -m pytest tests/
                     '''
                 }
             }
         }
+
 
         
     }
