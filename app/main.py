@@ -20,5 +20,3 @@ async def home(request: Request):
 @app.get('/health')
 async def health():
     return {'status': 'ok'}
-
-ddd
