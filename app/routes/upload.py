@@ -51,6 +51,7 @@ async def get_dashboard(request: Request, response: Response):
         # Data hasn't changed! Return instantly with NO body data.
         return Response(status_code=304)
     # 4. If data changed, set headers and send new data
+    
     response.headers["Cache-Control"] = "no-cache" # Must revalidate every time
     response.headers["ETag"] = current_etag
     return db_data
