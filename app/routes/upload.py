@@ -55,3 +55,25 @@ async def get_dashboard(request: Request, response: Response):
     response.headers["Cache-Control"] = "no-cache" # Must revalidate every time
     response.headers["ETag"] = current_etag
     return db_data
+
+from redis import asyncio as aioredis
+redis_client = aioredis.from_url("redis://localhost:6379", decode_responses=True)
+@router.get("/test_redis")
+async def get_product():
+    cache_key = "_product"
+    cached_product = await redis_client.get(cache_key)
+    if cached_product:
+        product_data = json.loads(cached_product)
+        product_data["source"] = "This info is from cache"
+        return product_data
+        
+    db_product = {'name': 'headphone 1', 'price': 45.6}
+    if not db_product:
+        return None
+    await redis_client.setex(
+        name=cache_key,
+        time=30,    #30 sec
+        value=json.dumps(db_product)
+    )
+    db_product["source"] = "This info from db"
+    return db_product
