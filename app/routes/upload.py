@@ -1,5 +1,5 @@
 
-from fastapi import APIRouter, UploadFile, File
+from fastapi import APIRouter, UploadFile, File, Response
 import pandas as pd
 import uuid
 
@@ -18,3 +18,11 @@ async def upload_csv(file: UploadFile = File(...)):
         "preview": df.head(5).to_dict(),
         "filename": file.filename
     }
+
+#sample API to set cache control
+@router.get("/heavy-catalog")
+async def get_heavy_catalog(response: Response):
+    catalog_data = {"categories": ["Electronics", "Books", "Clothing"], "version": "1.0.4"}
+    response.headers["Cache-Control"] = "public, max-age=600"
+    response.headers["ETag"] = "v1-catalog-hash-777" 
+    return catalog_data
