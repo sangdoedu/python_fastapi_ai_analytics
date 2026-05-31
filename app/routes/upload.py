@@ -77,3 +77,23 @@ async def get_product():
     )
     db_product["source"] = "This info from db"
     return db_product
+
+
+from groq import Groq
+groq_client = Groq(api_key="xxx")
+def call_llm(system: str, prompt: str) -> str:
+    chat_completion = await groq_client.chat.completions.create(
+        messages=[
+                {"role": "user", "content": prompt}
+            ],
+            model="llama-3.3-70b-versatile"
+        )
+    ai_text = chat_completion.choices[0].message.content
+    return ai_text
+
+
+def _generate_cache_key(ai_model_name, prompt: str) -> str:
+    clean_prompt = prompt.strip().lower()
+    prompt_hash = hashlib.sha256(clean_prompt.encode('utf-8')).hexdigest()
+    return f"llm:cache:{ai_model_name}:{prompt_hash}"
+
